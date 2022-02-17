@@ -10,7 +10,7 @@ import Header from "./components/Header/Header";
 
 import { Route, Switch } from "react-router-dom";
 
-import { auth } from "./firebase/utils/firebase";
+import { auth, createUserProfileDocument } from "./firebase/utils/firebase";
 
 class App extends React.Component {
   constructor() {
@@ -23,9 +23,23 @@ class App extends React.Component {
   unsubscribeFromAuth = null;
 
   componentDidMount() {
-    this.unsubscribeFromAuth = auth.onAuthStateChanged((user) => {
-      this.setState({ currentUser: user });
-      console.log(user);
+    this.unsubscribeFromAuth = auth.onAuthStateChanged(async (userAuth) => {
+      if (userAuth) {
+        const userRef = await createUserProfileDocument(userAuth);
+
+        userRef.onSnapshot((snapshot) => {
+          this.setState({
+            currentUser: {
+              id: snapshot.id,
+              ...snapshot.data(),
+            },
+          });
+
+          console.log(this.state);
+        });
+      } else {
+        this.setState({ currentUser: userAuth });
+      }
     });
   }
 
